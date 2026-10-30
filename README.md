@@ -79,6 +79,6 @@ Run unit tests with `swift test`. Optional live tests use the local CLI login an
 
 Never commit credentials, private CLI data, real usage transcripts, or personal screenshots. Use fake profiles and temporary directories in tests. See [the implementation plan](docs/plan.md) for architecture and known gaps.
 
-## License
+## License and permissions
 
-No license has been added. All rights reserved unless a license is explicitly added.
+This repository is publicly visible for inspection, but the software is proprietary. **All rights are reserved.** No permission is granted to copy, modify, redistribute, bundle, resell, or use the software commercially without prior written authorization. See [LICENSE](LICENSE). GitHub visibility is not a software license. This is a project notice, not legal advice; have counsel review it if you plan formal commercial enforcement.
