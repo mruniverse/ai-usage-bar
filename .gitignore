@@ -7,3 +7,4 @@ xcuserdata/
 .env.*
 !.env.example
 *.log
+Resources/AppIcon.iconset/
