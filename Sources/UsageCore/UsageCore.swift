@@ -114,7 +114,6 @@ public struct CodexClient {
                 if errno != EINTR { throw ProviderError.serviceError }
             }
         }
-        var accountChanged = false
         func request(_ id: Int, _ method: String, _ params: [String: Any]) throws -> [String: Any] {
             let message: [String: Any] = ["id": id, "method": method, "params": params]
             var bytes = try JSONSerialization.data(withJSONObject: message); bytes.append(10)
@@ -128,14 +127,14 @@ public struct CodexClient {
                 if byte[0] != 10 { line.append(byte); if line.count > 1_000_000 { throw ProviderError.invalidResponse }; continue }
                 defer { line.removeAll(keepingCapacity: true) }
                 guard let obj = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { throw ProviderError.invalidResponse }
-                if let method = obj["method"] as? String, method == "account/updated" { accountChanged = true }
+                if let method = obj["method"] as? String, method == "account/updated" { continue }
                 guard let responseID = obj["id"] as? Int, responseID == id else { continue }
                 if obj["error"] != nil { throw ProviderError.serviceError }
                 guard let result = obj["result"] as? [String: Any] else { throw ProviderError.invalidResponse }
                 return result
             }
         }
-        _ = try request(1, "initialize", ["clientInfo": ["name": "ai_usage_bar", "version": "0.1.0"]])
+        _ = try request(1, "initialize", ["clientInfo": ["name": "ai_usage_bar", "version": "0.1.1"]])
         let account = try request(2, "account/read", ["refreshToken": false])
         guard let accountInfo = account["account"] as? [String: Any] else { throw ProviderError.disconnected }
         try Self.validateAccount(type: accountInfo["type"] as? String, plan: accountInfo["planType"] as? String)
@@ -143,7 +142,7 @@ public struct CodexClient {
         if accountOnly { return (accountInfo["planType"] as? String, nil) }
         let result = try request(3, "account/rateLimits/read", [:])
         let check = try request(4, "account/read", ["refreshToken": false])
-        guard !accountChanged, let after = check["account"] as? [String: Any],
+        guard let after = check["account"] as? [String: Any],
               after["email"] as? String == email,
               after["type"] as? String == accountInfo["type"] as? String,
               after["planType"] as? String == accountInfo["planType"] as? String else { throw ProviderError.unknownAccount }

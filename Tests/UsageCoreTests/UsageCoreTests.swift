@@ -55,6 +55,23 @@ final class UsageCoreTests: XCTestCase {
         }
     }
 
+    func testBenignAccountUpdatedNotificationDoesNotDiscardStableIdentity() throws {
+        let script = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let body = """
+        #!/bin/sh
+        read x; printf '%s\\n' '{"id":1,"result":{}}'
+        read x; printf '%s\\n' '{"id":2,"result":{"account":{"type":"chatgpt","planType":"plus","email":"same@example.invalid"}}}'
+        read x; printf '%s\\n' '{"method":"account/updated","params":{"authMode":"chatgpt","planType":"plus"}}'
+        printf '%s\\n' '{"id":3,"result":{"rateLimits":{"primary":{"usedPercent":20},"planType":"plus"}}}'
+        read x; printf '%s\\n' '{"id":4,"result":{"account":{"type":"chatgpt","planType":"plus","email":"same@example.invalid"}}}'
+        """
+        try body.write(to: script, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o700], ofItemAtPath: script.path)
+        defer { try? FileManager.default.removeItem(at: script) }
+        let snapshot = try CodexClient().fetch(executable: script.path, timeout: 2)
+        XCTAssertEqual(snapshot.windows.first?.usedPercent, 20)
+    }
+
     func testMissingAccountIdentityIsUnknown() throws {
         let script = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let body = """
